@@ -79,7 +79,7 @@ const getUsersByGroup = (request, response) => {
     const groupId = parseInt(request.params.groupId);
 
     try{
-        pool.query('SELECT * FROM users INNER JOIN userGroups ON groups.id = userGroups.groupId where userGroups.groupId = $1', [groupId], (error, results) => {
+        pool.query('SELECT * FROM users INNER JOIN user_groups ON groups.id = user_groups.group_id where user_groups.group_id = $1', [groupId], (error, results) => {
             if (error) {
                 throw error;
             }
@@ -115,7 +115,7 @@ const createUser = (request, response) => {
             if (error) {
                 throw error;
             }
-            response.status(200).json(results.rows);
+            response.status(200).send(`User added with succes`);
         });
     }
     catch(error){
@@ -132,7 +132,7 @@ const changeRoleUser = (request, response) => {
             if (error) {
                 throw error;
             }
-            response.status(200).json(results.rows);
+            response.status(200).send(`User ID : ${id} role changed with succes`);
         });
     }
     catch(error){
@@ -148,7 +148,7 @@ const deleteUser = (request, response) => {
             if (error) {
                 throw error;
             }
-            response.status(200).json(results.rows);
+            response.status(200).send(`User ID : ${id} deleted with succes`);
         });
     }
     catch(error){

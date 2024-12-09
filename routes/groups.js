@@ -27,7 +27,7 @@ const getGroupsByUser = (request, response) => {
     const userId = parseInt(request.params.userId);
 
     try{
-        pool.query('SELECT * FROM groups INNER JOIN userGroups ON groups.id = userGroups.groupId where userGroups.userId = $1', [userId], (error, results) => {
+        pool.query('SELECT * FROM groups INNER JOIN user_groups ON groups.id = user_groups.group_id INNER JOIN users ON user_groups.user_id = users.id where user_groups.user_id = $1', [userId], (error, results) => {
             if (error) {
                 throw error;
             }
@@ -40,14 +40,14 @@ const getGroupsByUser = (request, response) => {
 }
 
 const createGroup = (request, response) => {
-    const { name, lastname, email } = request.body;
+    const { name } = request.body;
 
     try{
-        pool.query('SELECT * FROM groups INNER JOIN userGroups ON groups.id = userGroups.groupId where userGroups.userId = $1', [userId], (error, results) => {
+        pool.query('INSERT INTO groups (name) VALUES ($1)', [name], (error, results) => {
             if (error) {
                 throw error;
             }
-            response.status(200).json(results.rows);
+            response.status(200).send(`Group added with succes`);
         });
     }
     catch(error){
@@ -63,7 +63,7 @@ const deleteGroup = (request, response) => {
             if (error) {
                 throw error;
             }
-            response.status(200).json(results.rows);
+            response.status(200).send(`Group ID : ${id} deleted with succes`);
         });
     }
     catch(error){
@@ -74,6 +74,7 @@ const deleteGroup = (request, response) => {
 module.exports = {
     getAllGroups,
     getGroupsByUser,
-    createGroup
+    createGroup,
+    deleteGroup
 }
   

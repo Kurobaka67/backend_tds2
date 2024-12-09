@@ -33,6 +33,8 @@ app.post('/message', messagedb.createMessage);
 
 app.get('/groups', groupdb.getAllGroups);
 app.get('/groups/user/:userId', groupdb.getGroupsByUser);
+app.post('/group', groupdb.createGroup);
+app.delete('/group/:groupId', groupdb.deleteGroup);
 
 app.listen(port, () => {
     console.log(`App running on port ${port}.`)
