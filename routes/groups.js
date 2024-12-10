@@ -24,10 +24,10 @@ const getAllGroups = (request, response) => {
 }
 
 const getGroupsByUser = (request, response) => {
-    const userId = parseInt(request.params.userId);
+    const userEmail = request.params.userEmail;
 
     try{
-        pool.query('SELECT * FROM groups INNER JOIN user_groups ON groups.id = user_groups.group_id INNER JOIN users ON user_groups.user_id = users.id where user_groups.user_id = $1', [userId], (error, results) => {
+        pool.query('SELECT * FROM groups INNER JOIN user_groups ON groups.id = user_groups.group_id INNER JOIN users ON user_groups.user_id = users.id where users.email = $1', [userEmail], (error, results) => {
             if (error) {
                 throw error;
             }

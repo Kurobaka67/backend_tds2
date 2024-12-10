@@ -1,4 +1,5 @@
 const Pool = require('pg').Pool
+const crypto = require('crypto');
 
 
 const pool = new Pool({
@@ -10,23 +11,26 @@ const pool = new Pool({
 });
 
 const login = (request, response) => {
-    const { firstname, lastname, email } = request.body;
+    const { email, password } = request.body;
+    const hash = crypto.createHash('sha256');
+    hash.update(password);
+    const digest = hash.digest('hex');
 
     try{
-        pool.query('SELECT * FROM users where hash = $1', [request.headers['x-api-key']], (error, results) => {
+        pool.query('SELECT * FROM users where email = $1 and password = $2', [email, digest], (error, results) => {
             if (error) {
                 throw error;
             }
             if(results.rows.length > 0){
-                pool.query('SELECT * FROM requests WHERE archive = false', (error2, results2) => {
+                pool.query('UPDATE users SET status = $1 WHERE email = $2', ['connected', email], (error2, results2) => {
                     if (error2) {
                         throw error2;
                     }
-                    response.status(200).json(results2.rows);
+                    response.status(200).json(results.rows);
                 });
             }
             else{
-                response.status(401).send('Not authorized');
+                response.status(401).send('No user found');
             }
         });
     }
@@ -36,24 +40,14 @@ const login = (request, response) => {
 }
 
 const logout = (request, response) => {
-    const { firstname, lastname, email } = request.body;
+    const { email } = request.body;
 
     try{
-        pool.query('SELECT * FROM users where hash = $1', [request.headers['x-api-key']], (error, results) => {
+        pool.query('UPDATE users SET status = $1 WHERE email = $2', ['disconnected', email], (error, results) => {
             if (error) {
                 throw error;
             }
-            if(results.rows.length > 0){
-                pool.query('SELECT * FROM requests WHERE archive = false', (error2, results2) => {
-                    if (error2) {
-                        throw error2;
-                    }
-                    response.status(200).json(results2.rows);
-                });
-            }
-            else{
-                response.status(401).send('Not authorized');
-            }
+            response.status(200).send("User logged out");
         });
     }
     catch(error){
@@ -107,11 +101,14 @@ const getUserById = (request, response) => {
     }
 }
 
-const createUser = (request, response) => {
-    const { firstname, lastname, email } = request.body;
+const createAccount = (request, response) => {
+    const { firstname, lastname, email, password } = request.body;
+    const hash = crypto.createHash('sha256');
+    hash.update(password);
+    const digest = hash.digest('hex');
 
     try{
-        pool.query('INSERT INTO users (firstname, lastname, email) VALUES ($1, $2, $3)', [firstname, lastname, email], (error, results) => {
+        pool.query('INSERT INTO users (firstname, lastname, email, role, password, status) VALUES ($1, $2, $3, $4, $5, $6)', [firstname, lastname, email, 'client', digest, 'disconnected'], (error, results) => {
             if (error) {
                 throw error;
             }
@@ -162,7 +159,7 @@ module.exports = {
     getAllUsers,
     getUsersByGroup,
     getUserById,
-    createUser,
+    createAccount,
     changeRoleUser,
     deleteUser
 }
