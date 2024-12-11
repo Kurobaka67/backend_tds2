@@ -137,6 +137,22 @@ const changeRoleUser = (request, response) => {
     }
 }
 
+const changeUserData = (request, response) => {
+    const { email, firstnama, lastname } = request.body;
+
+    try{
+        pool.query('UPDATE users SET email = $1, firstname = $2, lastname = $3 where email = $1', [email, firstnama, lastname], (error, results) => {
+            if (error) {
+                throw error;
+            }
+            response.status(200).send(`User data changed with succes`);
+        });
+    }
+    catch(error){
+        console.error(error);
+    }
+}
+
 const deleteUser = (request, response) => {
     const id = parseInt(request.params.id);
 
@@ -160,6 +176,7 @@ module.exports = {
     getUsersByGroup,
     getUserById,
     createAccount,
+    changeUserData,
     changeRoleUser,
     deleteUser
 }

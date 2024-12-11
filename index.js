@@ -24,6 +24,7 @@ app.get('/user/:id', userdb.getUserById);
 app.post('/user', userdb.createAccount);
 app.post('/login', userdb.login);
 app.post('/logout', userdb.logout);
+app.put('/user', userdb.changeUserData);
 app.put('/user/role/:id', userdb.changeRoleUser);
 app.delete('/user/:id', userdb.deleteUser);
 
