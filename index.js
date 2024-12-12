@@ -7,7 +7,8 @@ const messagedb = require('./routes/messages');
 const port = 3000;
 
 
-app.use(bodyParser.json());
+app.use(bodyParser.json({limit: '50mb'}));
+app.use(bodyParser.urlencoded({limit: '50mb', extended: true, parameterLimit:50000}));
 app.use(
   bodyParser.urlencoded({
     extended: true,
@@ -20,7 +21,7 @@ app.get('/', (request, response) => {
 
 app.get('/users', userdb.getAllUsers);
 app.get('/users/group/:groupId', userdb.getUsersByGroup);
-app.get('/user/:id', userdb.getUserById);
+app.get('/user/:userEmail', userdb.getUserByEmail);
 app.post('/user', userdb.createAccount);
 app.post('/login', userdb.login);
 app.post('/logout', userdb.logout);

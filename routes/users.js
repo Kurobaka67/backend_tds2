@@ -73,7 +73,7 @@ const getUsersByGroup = (request, response) => {
     const groupId = parseInt(request.params.groupId);
 
     try{
-        pool.query('SELECT * FROM users INNER JOIN user_groups ON groups.id = user_groups.group_id where user_groups.group_id = $1', [groupId], (error, results) => {
+        pool.query('SELECT * FROM users INNER JOIN user_groups ON users.id = user_groups.user_id where user_groups.group_id = $1', [groupId], (error, results) => {
             if (error) {
                 throw error;
             }
@@ -85,11 +85,11 @@ const getUsersByGroup = (request, response) => {
     }
 }
 
-const getUserById = (request, response) => {
-    const id = parseInt(request.params.id);
+const getUserByEmail = (request, response) => {
+    const userEmail = request.params.userEmail;
 
     try{
-        pool.query('SELECT * FROM users where id = $1', [id], (error, results) => {
+        pool.query('SELECT * FROM users where email = $1', [userEmail], (error, results) => {
             if (error) {
                 throw error;
             }
@@ -138,10 +138,10 @@ const changeRoleUser = (request, response) => {
 }
 
 const changeUserData = (request, response) => {
-    const { email, firstnama, lastname } = request.body;
+    const { email, firstname, lastname, picture } = request.body;
 
     try{
-        pool.query('UPDATE users SET email = $1, firstname = $2, lastname = $3 where email = $1', [email, firstnama, lastname], (error, results) => {
+        pool.query('UPDATE users SET firstname = $2, lastname = $3, picture = $4 where email = $1', [email, firstname, lastname, picture], (error, results) => {
             if (error) {
                 throw error;
             }
@@ -174,7 +174,7 @@ module.exports = {
     logout,
     getAllUsers,
     getUsersByGroup,
-    getUserById,
+    getUserByEmail,
     createAccount,
     changeUserData,
     changeRoleUser,
