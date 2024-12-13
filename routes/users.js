@@ -71,12 +71,14 @@ const getAllUsers = (request, response) => {
 
 const getUsersByGroup = (request, response) => {
     const groupId = parseInt(request.params.groupId);
+    console.log(groupId);
 
     try{
         pool.query('SELECT * FROM users INNER JOIN user_groups ON users.id = user_groups.user_id where user_groups.group_id = $1', [groupId], (error, results) => {
             if (error) {
                 throw error;
             }
+            console.log(results.rows);
             response.status(200).json(results.rows);
         });
     }

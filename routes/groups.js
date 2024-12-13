@@ -31,6 +31,25 @@ const getGroupsByUser = (request, response) => {
             if (error) {
                 throw error;
             }
+            console.log(results.rows);
+            response.status(200).json(results.rows);
+        });
+    }
+    catch(error){
+        console.error(error);
+    }
+}
+
+const changeGroupUserRole = (request, response) => {
+    const id = parseInt(request.params.id);
+    const { role } = request.body;
+
+    try{
+        pool.query('UPDATE user_groups SET group_role = $1 where user_id = $2', [role, id], (error, results) => {
+            if (error) {
+                throw error;
+            }
+            console.log(results.rows);
             response.status(200).json(results.rows);
         });
     }
@@ -74,6 +93,7 @@ const deleteGroup = (request, response) => {
 module.exports = {
     getAllGroups,
     getGroupsByUser,
+    changeGroupUserRole,
     createGroup,
     deleteGroup
 }

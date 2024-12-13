@@ -36,6 +36,7 @@ app.post('/message', messagedb.createMessage);
 
 app.get('/groups', groupdb.getAllGroups);
 app.get('/groups/user/:userEmail', groupdb.getGroupsByUser);
+app.post('/groups/user/role/:id', groupdb.changeGroupUserRole);
 app.post('/group', groupdb.createGroup);
 app.delete('/group/:groupId', groupdb.deleteGroup);
 
