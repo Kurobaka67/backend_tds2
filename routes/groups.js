@@ -31,7 +31,6 @@ const getGroupsByUser = (request, response) => {
             if (error) {
                 throw error;
             }
-            console.log(results.rows);
             response.status(200).json(results.rows);
         });
     }
@@ -49,7 +48,6 @@ const changeGroupUserRole = (request, response) => {
             if (error) {
                 throw error;
             }
-            console.log(results.rows);
             response.status(200).json(results.rows);
         });
     }

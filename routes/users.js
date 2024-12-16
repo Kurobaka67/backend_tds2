@@ -11,10 +11,12 @@ const pool = new Pool({
 });
 
 const login = (request, response) => {
-    const { email, password } = request.body;
+    const { email, password, token } = request.body;
     const hash = crypto.createHash('sha256');
     hash.update(password);
     const digest = hash.digest('hex');
+
+    console.log(token)
 
     try{
         pool.query('SELECT * FROM users where email = $1 and password = $2', [email, digest], (error, results) => {
@@ -22,7 +24,7 @@ const login = (request, response) => {
                 throw error;
             }
             if(results.rows.length > 0){
-                pool.query('UPDATE users SET status = $1 WHERE email = $2', ['connected', email], (error2, results2) => {
+                pool.query('UPDATE users SET status = $1, token = $2 WHERE email = $3', ['connected', token, email], (error2, results2) => {
                     if (error2) {
                         throw error2;
                     }
@@ -43,7 +45,7 @@ const logout = (request, response) => {
     const { email } = request.body;
 
     try{
-        pool.query('UPDATE users SET status = $1 WHERE email = $2', ['disconnected', email], (error, results) => {
+        pool.query('UPDATE users SET status = $1, token = $2 WHERE email = $3', ['disconnected', null, email], (error, results) => {
             if (error) {
                 throw error;
             }
@@ -78,7 +80,6 @@ const getUsersByGroup = (request, response) => {
             if (error) {
                 throw error;
             }
-            console.log(results.rows);
             response.status(200).json(results.rows);
         });
     }

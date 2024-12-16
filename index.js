@@ -5,7 +5,13 @@ const userdb = require('./routes/users');
 const groupdb = require('./routes/groups');
 const messagedb = require('./routes/messages');
 const port = 3000;
+const admin = require('firebase-admin');
+const serviceAccount = require('./tds2-cf434-firebase-adminsdk-k7hc9-e8220f1d3b.json');
 
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: 'https://tds2.firebaseio.com',
+});
 
 app.use(bodyParser.json({limit: '50mb'}));
 app.use(bodyParser.urlencoded({limit: '50mb', extended: true, parameterLimit:50000}));
