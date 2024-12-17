@@ -39,6 +39,7 @@ app.get('/messages', messagedb.getAllMessage);
 app.get('/messages/group/:groupId', messagedb.getMessagesByGroup);
 app.get('/message/:id', messagedb.getMessagesByUser);
 app.post('/message', messagedb.createMessage);
+app.post('/message/group', messagedb.createMessageToGroup);
 
 app.get('/groups', groupdb.getAllGroups);
 app.get('/groups/user/:userEmail', groupdb.getGroupsByUser);
