@@ -28,7 +28,7 @@ const getMessagesByGroup = (request, response) => {
     const groupId = parseInt(request.params.groupId);
 
     try{
-        pool.query('SELECT * FROM messages INNER JOIN message_groups ON messages.id = message_groups.message_id where message_groups.group_id = $1', [groupId], (error, results) => {
+        pool.query('SELECT * FROM messages INNER JOIN message_groups ON messages.id = message_groups.message_id INNER JOIN users ON users.id = messages.user_id where message_groups.group_id = $1', [groupId], (error, results) => {
             if (error) {
                 throw error;
             }
@@ -85,7 +85,7 @@ const createMessageToGroup = (request, response) => {
                     if (error2) {
                         throw error2;
                     }
-                    sendPushMessage('Titre', 'Test', groupId)
+                    sendPushMessage('Message', content, groupId, userId)
                     response.status(200).send(`Message added with succes`);
                 });
             }
@@ -120,8 +120,9 @@ async function getUsersGroup(groupId){
     } 
 }
 
-async function sendPushMessage(title, body, groupId){
+async function sendPushMessage(title, body, groupId, userId){
     var users = await getUsersGroup(groupId);
+    console.log(users);
     const tokens = [];
 
     if(users != null || users != undefined){
@@ -137,8 +138,13 @@ async function sendPushMessage(title, body, groupId){
             title,
             body,
         },
+        data: {
+            "userId": userId
+        },
         tokens,
     };
+
+    console.log(message);
   
     if(tokens.length > 0){
         await admin.messaging().sendEachForMulticast(message);

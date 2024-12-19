@@ -6,7 +6,7 @@ const groupdb = require('./routes/groups');
 const messagedb = require('./routes/messages');
 const port = 3000;
 const admin = require('firebase-admin');
-const serviceAccount = require('./tds2-cf434-firebase-adminsdk-k7hc9-e8220f1d3b.json');
+const serviceAccount = require('./tds2-cf434-firebase-adminsdk-k7hc9-4b723bda40.json');
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
