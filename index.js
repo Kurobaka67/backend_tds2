@@ -43,8 +43,9 @@ app.post('/message/group', messagedb.createMessageToGroup);
 
 app.get('/groups', groupdb.getAllGroups);
 app.get('/groups/user/:userEmail', groupdb.getGroupsByUser);
-app.post('/groups/user/role/:id', groupdb.changeGroupUserRole);
+app.post('/group/user', groupdb.addUserToGroup);
 app.post('/group', groupdb.createGroup);
+app.put('/group/user/role/:id', groupdb.changeGroupUserRole);
 app.delete('/group/:groupId', groupdb.deleteGroup);
 
 app.listen(port, () => {

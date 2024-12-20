@@ -41,7 +41,26 @@ const getGroupsByUser = (request, response) => {
 
 const changeGroupUserRole = (request, response) => {
     const id = parseInt(request.params.id);
-    const { role } = request.body;
+    const { role, groupId } = request.body;
+
+    try{
+        pool.query('UPDATE user_groups SET group_role = $1 where user_id = $2 AND group_id = $3', [role, id, groupId], (error, results) => {
+            if (error) {
+                throw error;
+            }
+            response.status(200).json(results.rows);
+        });
+    }
+    catch(error){
+        console.error(error);
+    }
+}
+
+const addUserToGroup = (request, resposne) => {
+    const { groupId, userId, groupRole } = request.body;
+    if(groupRole == null){
+        groupRole = 3
+    }
 
     try{
         pool.query('UPDATE user_groups SET group_role = $1 where user_id = $2', [role, id], (error, results) => {
@@ -92,6 +111,7 @@ module.exports = {
     getAllGroups,
     getGroupsByUser,
     changeGroupUserRole,
+    addUserToGroup,
     createGroup,
     deleteGroup
 }
