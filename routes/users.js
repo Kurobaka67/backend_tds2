@@ -1,5 +1,6 @@
 const Pool = require('pg').Pool
 const crypto = require('crypto');
+const bcrypt = require('bcrypt');
 
 
 const pool = new Pool({
@@ -10,26 +11,38 @@ const pool = new Pool({
     port: 5432
 });
 
+const workFactor = 10;
+
 const login = (request, response) => {
     const { email, password, token } = request.body;
-    const hash = crypto.createHash('sha256');
+    /*const hash = crypto.createHash('sha256');
     hash.update(password);
-    const digest = hash.digest('hex');
-
-    console.log(token)
+    const digest = hash.digest('hex');*/
 
     try{
-        pool.query('SELECT * FROM users where email = $1 and password = $2', [email, digest], (error, results) => {
+        pool.query('SELECT * FROM users where email = $1', [email], (error, results) => {
             if (error) {
                 throw error;
             }
             if(results.rows.length > 0){
-                pool.query('UPDATE users SET status = $1, token = $2 WHERE email = $3', ['connected', token, email], (error2, results2) => {
-                    if (error2) {
-                        throw error2;
+                bcrypt.compare(password, results.rows[0].password, function(err, result) {
+                    // Password matched
+                    if (result) {
+                      console.log("Password verified");
+                      pool.query('UPDATE users SET status = $1, token = $2 WHERE email = $3', ['connected', token, email], (error2, results2) => {
+                        if (error2) {
+                            throw error2;
+                        }
+                        response.status(200).json(results.rows);
+                    });
                     }
-                    response.status(200).json(results.rows);
-                });
+                    // Password not matched
+                    else {
+                      console.log("Password not verified");
+                      response.status(401).send('Password not verified');
+                    }
+                  });
+                
             }
             else{
                 response.status(401).send('No user found');
@@ -106,12 +119,20 @@ const getUserByEmail = (request, response) => {
 
 const createAccount = (request, response) => {
     const { firstname, lastname, email, password } = request.body;
-    const hash = crypto.createHash('sha256');
+    var hash;
+    bcrypt.genSalt(workFactor, function(err, salt) {  
+        bcrypt.hash(password, salt, function(err, hash) {
+            hash = hash;
+            console.log(`Hash: ${hash}`);
+        });
+    });
+
+    /*const hash = crypto.createHash('sha256');
     hash.update(password);
-    const digest = hash.digest('hex');
+    const digest = hash.digest('hex');*/
 
     try{
-        pool.query('INSERT INTO users (firstname, lastname, email, role, password, status) VALUES ($1, $2, $3, $4, $5, $6)', [firstname, lastname, email, 'client', digest, 'disconnected'], (error, results) => {
+        pool.query('INSERT INTO users (firstname, lastname, email, role, password, status) VALUES ($1, $2, $3, $4, $5, $6)', [firstname, lastname, email, 'client', hash, 'disconnected'], (error, results) => {
             if (error) {
                 throw error;
             }

@@ -26,13 +26,24 @@ const getAllMessage = (request, response) => {
 
 const getMessagesByGroup = (request, response) => {
     const groupId = parseInt(request.params.groupId);
+    const { userId } = request.body;
 
     try{
-        pool.query('SELECT * FROM messages INNER JOIN message_groups ON messages.id = message_groups.message_id INNER JOIN users ON users.id = messages.user_id where message_groups.group_id = $1', [groupId], (error, results) => {
+        pool.query('SELECT * FROM users INNER JOIN user_groups ON users.id = user_groups.user_id where user.id = $1', [userId], (error, results) => {
             if (error) {
                 throw error;
             }
-            response.status(200).json(results.rows);
+            if(results.rows.length > 0){
+                pool.query('SELECT * FROM messages INNER JOIN message_groups ON messages.id = message_groups.message_id INNER JOIN users ON users.id = messages.user_id where message_groups.group_id = $1 AND message.sent_role >= $2', [groupId, results.rows[0].group_role], (error2, results2) => {
+                    if (error2) {
+                        throw error2;
+                    }
+                    response.status(200).json(results2.rows);
+                });
+            }
+            else{
+                response.status(401).send(`Couldn\'t get messages`);
+            }
         });
     }
     catch(error){
@@ -57,14 +68,25 @@ const getMessagesByUser = (request, response) => {
 }
 
 const createMessage = (request, response) => {
-    const { content, userId } = request.body;
+    const { content, receiverId, senderId } = request.body;
 
     try{
-        pool.query('INSERT INTO messages (content, user_id) VALUES ($1, $2)', [content, userId], (error, results) => {
+        pool.query('INSERT INTO messages (content, user_id) VALUES ($1, $2) RETURNING *', [content, userId], (error, results) => {
             if (error) {
                 throw error;
             }
-            response.status(200).send(`Message added with succes`);
+            if(results.rows.length > 0){
+                pool.query('INSERT INTO privates_messages (message_id, receiver_id, sender_id) VALUES ($1, $2, $3)', [results.rows[0].id, receiverId, senderId], (error2, results2) => {
+                    if (error2) {
+                        throw error2;
+                    }
+                    sendPushMessage('Message', content, groupId, userId)
+                    response.status(200).send(`Message added with succes`);
+                });
+            }
+            else{
+                response.status(401).send(`Couldn\'t create message`);
+            }
         });
     }
     catch(error){
@@ -85,7 +107,7 @@ const createMessageToGroup = (request, response) => {
                     if (error2) {
                         throw error2;
                     }
-                    sendPushMessage('Message', content, groupId, userId)
+                    sendPushGroupMessage('Message', content, groupId, userId)
                     response.status(200).send(`Message added with succes`);
                 });
             }
@@ -120,7 +142,28 @@ async function getUsersGroup(groupId){
     } 
 }
 
-async function sendPushMessage(title, body, groupId, userId){
+async function getUsersById(userId){
+    try{
+        return await new Promise(function(resolve,reject){
+            pool.query('SELECT * FROM users WHERE id = $1', [userId], (error, results) => {
+                if (error) {
+                    reject(error);
+                }
+                if(results.rows.length > 0){
+                    resolve(results.rows);
+                }
+                else{
+                    resolve();
+                }
+            });
+        });
+    }
+    catch(error){
+        console.error(error);
+    } 
+}
+
+async function sendPushGroupMessage(title, body, groupId, userId){
     var users = await getUsersGroup(groupId);
     console.log(users);
     const tokens = [];
@@ -148,6 +191,26 @@ async function sendPushMessage(title, body, groupId, userId){
   
     if(tokens.length > 0){
         await admin.messaging().sendEachForMulticast(message);
+    }
+}
+
+async function sendPushPrivateMessage(title, body, receiverId, senderId){
+    var user = await getUsersById(receiverId);
+    var token = user.token;
+    
+    const message = {
+        notification: {
+            title,
+            body,
+        },
+        data: {
+            "userId": senderId
+        },
+        token,
+    };
+  
+    if(tokens.length > 0){
+        await admin.messaging().send(message);
     }
 }
 
