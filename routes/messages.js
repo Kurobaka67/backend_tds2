@@ -10,9 +10,19 @@ const pool = new Pool({
     port: 5432
 });
 
+const SELECT_ALL_MESSAGES = 'SELECT * FROM messages';
+const SELECT_USERS_GROUP_FROM_ID = 'SELECT * FROM users INNER JOIN user_groups ON users.id = user_groups.user_id where users.id = $1';
+const SELECT_MESSAGES_GROUP = 'SELECT * FROM messages INNER JOIN message_groups ON messages.id = message_groups.message_id INNER JOIN users ON users.id = messages.user_id INNER JOIN user_groups ON users.id = user_groups.user_id where message_groups.group_id = $1 AND messages.sent_role >= $2';
+const SELECT_MESSAGES_USER = 'SELECT * FROM messages where user_id = $1';
+const INSERT_MESSAGES = 'INSERT INTO messages (content, user_id) VALUES ($1, $2) RETURNING *';
+const INSERT_PRIVATE_MESSAGES = 'INSERT INTO privates_messages (message_id, receiver_id, sender_id) VALUES ($1, $2, $3)';
+const INSERT_MESSAGES_GROUP = 'INSERT INTO message_groups (group_id, message_id) VALUES ($1, $2)';
+const SELECT_USER_GROUP_FROM_GROUP_ID = 'SELECT * FROM users INNER JOIN user_groups ON users.id = user_groups.user_id WHERE user_groups.group_id = $1';
+const newLocal = 'SELECT * FROM users WHERE id = $1';
+
 const getAllMessage = (request, response) => {
     try{
-        pool.query('SELECT * FROM messages', (error, results) => {
+        pool.query(SELECT_ALL_MESSAGES, (error, results) => {
             if (error) {
                 throw error;
             }
@@ -29,12 +39,12 @@ const getMessagesByGroup = (request, response) => {
     const { userId } = request.body;
 
     try{
-        pool.query('SELECT * FROM users INNER JOIN user_groups ON users.id = user_groups.user_id where user.id = $1', [userId], (error, results) => {
+        pool.query(SELECT_USERS_GROUP_FROM_ID, [userId], (error, results) => {
             if (error) {
                 throw error;
             }
             if(results.rows.length > 0){
-                pool.query('SELECT * FROM messages INNER JOIN message_groups ON messages.id = message_groups.message_id INNER JOIN users ON users.id = messages.user_id where message_groups.group_id = $1 AND message.sent_role >= $2', [groupId, results.rows[0].group_role], (error2, results2) => {
+                pool.query(SELECT_MESSAGES_GROUP, [groupId, results.rows[0].group_role], (error2, results2) => {
                     if (error2) {
                         throw error2;
                     }
@@ -42,7 +52,7 @@ const getMessagesByGroup = (request, response) => {
                 });
             }
             else{
-                response.status(401).send(`Couldn\'t get messages`);
+                response.status(401).send(`Couldn't get messages`);
             }
         });
     }
@@ -55,7 +65,7 @@ const getMessagesByUser = (request, response) => {
     const userId = parseInt(request.params.userId);
 
     try{
-        pool.query('SELECT * FROM messages where user_id = $1', [userId], (error, results) => {
+        pool.query(SELECT_MESSAGES_USER, [userId], (error, results) => {
             if (error) {
                 throw error;
             }
@@ -71,12 +81,12 @@ const createMessage = (request, response) => {
     const { content, receiverId, senderId } = request.body;
 
     try{
-        pool.query('INSERT INTO messages (content, user_id) VALUES ($1, $2) RETURNING *', [content, userId], (error, results) => {
+        pool.query(INSERT_MESSAGES, [content, userId], (error, results) => {
             if (error) {
                 throw error;
             }
             if(results.rows.length > 0){
-                pool.query('INSERT INTO privates_messages (message_id, receiver_id, sender_id) VALUES ($1, $2, $3)', [results.rows[0].id, receiverId, senderId], (error2, results2) => {
+                pool.query(INSERT_PRIVATE_MESSAGES, [results.rows[0].id, receiverId, senderId], (error2, results2) => {
                     if (error2) {
                         throw error2;
                     }
@@ -98,12 +108,12 @@ const createMessageToGroup = (request, response) => {
     const { content, userId, groupId } = request.body;
 
     try{
-        pool.query('INSERT INTO messages (content, user_id) VALUES ($1, $2) RETURNING *', [content, userId], (error, results) => {
+        pool.query(INSERT_MESSAGES, [content, userId], (error, results) => {
             if (error) {
                 throw error;
             }
             if(results.rows.length > 0){
-                pool.query('INSERT INTO message_groups (group_id, message_id) VALUES ($1, $2)', [groupId, results.rows[0].id], (error2, results2) => {
+                pool.query(INSERT_MESSAGES_GROUP, [groupId, results.rows[0].id], (error2, results2) => {
                     if (error2) {
                         throw error2;
                     }
@@ -124,7 +134,7 @@ const createMessageToGroup = (request, response) => {
 async function getUsersGroup(groupId){
     try{
         return await new Promise(function(resolve,reject){
-            pool.query('SELECT * FROM users INNER JOIN user_groups ON users.id = user_groups.user_id WHERE user_groups.group_id = $1', [groupId], (error, results) => {
+            pool.query(SELECT_USER_GROUP_FROM_GROUP_ID, [groupId], (error, results) => {
                 if (error) {
                     reject(error);
                 }
@@ -145,7 +155,7 @@ async function getUsersGroup(groupId){
 async function getUsersById(userId){
     try{
         return await new Promise(function(resolve,reject){
-            pool.query('SELECT * FROM users WHERE id = $1', [userId], (error, results) => {
+            pool.query(newLocal, [userId], (error, results) => {
                 if (error) {
                     reject(error);
                 }
@@ -164,7 +174,7 @@ async function getUsersById(userId){
 }
 
 async function sendPushGroupMessage(title, body, groupId, userId){
-    var users = await getUsersGroup(groupId);
+    let users = await getUsersGroup(groupId);
     console.log(users);
     const tokens = [];
 
@@ -195,8 +205,8 @@ async function sendPushGroupMessage(title, body, groupId, userId){
 }
 
 async function sendPushPrivateMessage(title, body, receiverId, senderId){
-    var user = await getUsersById(receiverId);
-    var token = user.token;
+    let user = await getUsersById(receiverId);
+    let token = user.token;
     
     const message = {
         notification: {

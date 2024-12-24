@@ -36,8 +36,8 @@ app.put('/user/role/:id', userdb.changeRoleUser);
 app.delete('/user/:id', userdb.deleteUser);
 
 app.get('/messages', messagedb.getAllMessage);
-app.get('/messages/group/:groupId', messagedb.getMessagesByGroup);
 app.get('/message/:id', messagedb.getMessagesByUser);
+app.post('/messages/group/:groupId', messagedb.getMessagesByGroup);
 app.post('/message', messagedb.createMessage);
 app.post('/message/group', messagedb.createMessageToGroup);
 

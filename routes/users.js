@@ -13,6 +13,8 @@ const pool = new Pool({
 
 const workFactor = 10;
 
+const SELECT_USER_BY_EMAIL = 'SELECT * FROM users where email = $1';
+const UPDATE_USER_WHEN_LOGIN_LOGOUT = 'UPDATE users SET status = $1, token = $2 WHERE email = $3';
 const login = (request, response) => {
     const { email, password, token } = request.body;
     /*const hash = crypto.createHash('sha256');
@@ -20,7 +22,7 @@ const login = (request, response) => {
     const digest = hash.digest('hex');*/
 
     try{
-        pool.query('SELECT * FROM users where email = $1', [email], (error, results) => {
+        pool.query(SELECT_USER_BY_EMAIL, [email], (error, results) => {
             if (error) {
                 throw error;
             }
@@ -29,7 +31,7 @@ const login = (request, response) => {
                     // Password matched
                     if (result) {
                       console.log("Password verified");
-                      pool.query('UPDATE users SET status = $1, token = $2 WHERE email = $3', ['connected', token, email], (error2, results2) => {
+                      pool.query(UPDATE_USER_WHEN_LOGIN_LOGOUT, ['connected', token, email], (error2, results2) => {
                         if (error2) {
                             throw error2;
                         }
@@ -58,7 +60,7 @@ const logout = (request, response) => {
     const { email } = request.body;
 
     try{
-        pool.query('UPDATE users SET status = $1, token = $2 WHERE email = $3', ['disconnected', null, email], (error, results) => {
+        pool.query(UPDATE_USER_WHEN_LOGIN_LOGOUT, ['disconnected', null, email], (error, results) => {
             if (error) {
                 throw error;
             }
@@ -70,9 +72,10 @@ const logout = (request, response) => {
     }
 }
 
+const SELECT_ALL_USERS = 'SELECT * FROM users';
 const getAllUsers = (request, response) => {
     try{
-        pool.query('SELECT * FROM users', (error, results) => {
+        pool.query(SELECT_ALL_USERS, (error, results) => {
             if (error) {
                 throw error;
             }
@@ -84,12 +87,13 @@ const getAllUsers = (request, response) => {
     }
 }
 
+const SELECT_USER_BY_GROUP = 'SELECT * FROM users INNER JOIN user_groups ON users.id = user_groups.user_id where user_groups.group_id = $1';
 const getUsersByGroup = (request, response) => {
     const groupId = parseInt(request.params.groupId);
     console.log(groupId);
 
     try{
-        pool.query('SELECT * FROM users INNER JOIN user_groups ON users.id = user_groups.user_id where user_groups.group_id = $1', [groupId], (error, results) => {
+        pool.query(SELECT_USER_BY_GROUP, [groupId], (error, results) => {
             if (error) {
                 throw error;
             }
@@ -105,7 +109,7 @@ const getUserByEmail = (request, response) => {
     const userEmail = request.params.userEmail;
 
     try{
-        pool.query('SELECT * FROM users where email = $1', [userEmail], (error, results) => {
+        pool.query(SELECT_USER_BY_EMAIL, [userEmail], (error, results) => {
             if (error) {
                 throw error;
             }
@@ -117,6 +121,7 @@ const getUserByEmail = (request, response) => {
     }
 }
 
+const INSERT_NEW_USER = 'INSERT INTO users (firstname, lastname, email, role, password, status) VALUES ($1, $2, $3, $4, $5, $6)';
 const createAccount = (request, response) => {
     const { firstname, lastname, email, password } = request.body;
     var hash;
@@ -132,7 +137,7 @@ const createAccount = (request, response) => {
     const digest = hash.digest('hex');*/
 
     try{
-        pool.query('INSERT INTO users (firstname, lastname, email, role, password, status) VALUES ($1, $2, $3, $4, $5, $6)', [firstname, lastname, email, 'client', hash, 'disconnected'], (error, results) => {
+        pool.query(INSERT_NEW_USER, [firstname, lastname, email, 'client', hash, 'disconnected'], (error, results) => {
             if (error) {
                 throw error;
             }
@@ -144,12 +149,13 @@ const createAccount = (request, response) => {
     }
 }
 
+const UPDATE_USER_ROLE = 'UPDATE users SET role = $1 where id = $2';
 const changeRoleUser = (request, response) => {
     const id = parseInt(request.params.id);
     const { role } = request.body;
 
     try{
-        pool.query('UPDATE users SET role = $1 where id = $2', [role, id], (error, results) => {
+        pool.query(UPDATE_USER_ROLE, [role, id], (error, results) => {
             if (error) {
                 throw error;
             }
@@ -161,11 +167,12 @@ const changeRoleUser = (request, response) => {
     }
 }
 
+const UPDATE_USER_DATA = 'UPDATE users SET firstname = $2, lastname = $3, picture = $4 where email = $1';
 const changeUserData = (request, response) => {
     const { email, firstname, lastname, picture } = request.body;
 
     try{
-        pool.query('UPDATE users SET firstname = $2, lastname = $3, picture = $4 where email = $1', [email, firstname, lastname, picture], (error, results) => {
+        pool.query(UPDATE_USER_DATA, [email, firstname, lastname, picture], (error, results) => {
             if (error) {
                 throw error;
             }
@@ -177,11 +184,12 @@ const changeUserData = (request, response) => {
     }
 }
 
+const DELETE_USER = 'DELETE FROM users where id = $1';
 const deleteUser = (request, response) => {
     const id = parseInt(request.params.id);
 
     try{
-        pool.query('DELETE FROM users where id = $1', [id], (error, results) => {
+        pool.query(DELETE_USER, [id], (error, results) => {
             if (error) {
                 throw error;
             }
