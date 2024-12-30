@@ -4,6 +4,7 @@ const app = express();
 const userdb = require('./routes/users');
 const groupdb = require('./routes/groups');
 const messagedb = require('./routes/messages');
+const contactdb = require('./routes/contacts');
 const port = 3000;
 const admin = require('firebase-admin');
 const serviceAccount = require('./tds2-cf434-firebase-adminsdk-k7hc9-4b723bda40.json');
@@ -47,6 +48,11 @@ app.post('/group/user', groupdb.addUserToGroup);
 app.post('/group', groupdb.createGroup);
 app.put('/group/user/role/:id', groupdb.changeGroupUserRole);
 app.delete('/group/:groupId', groupdb.deleteGroup);
+
+app.get('/contacts', contactdb.getAllContacts);
+app.get('/contacts/:userId', contactdb.getContactsByUser);
+app.post('/contacts', contactdb.addContactToUser);
+app.delete('/contacts', contactdb.deleteContactToUser);
 
 app.listen(port, () => {
     console.log(`App running on port ${port}.`)
