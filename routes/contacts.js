@@ -52,7 +52,7 @@ const addContactToUser = (request, response) => {
             if (error) {
                 throw error;
             }
-            response.status(200).json(results.rows);
+            response.status(200).send(`Contact added with succes`);
         });
     }
     catch(error){
@@ -68,7 +68,7 @@ const deleteContactToUser = (request, response) => {
             if (error) {
                 throw error;
             }
-            response.status(200).json(results.rows);
+            response.status(200).send(`Contact deleted with succes`);
         });
     }
     catch(error){

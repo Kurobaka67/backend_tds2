@@ -11,7 +11,7 @@ const pool = new Pool({
 });
 
 const SELECT_ALL_MESSAGES = 'SELECT * FROM messages';
-const SELECT_USERS_GROUP_FROM_ID = 'SELECT * FROM users INNER JOIN user_groups ON users.id = user_groups.user_id where users.id = $1 AND user_group.group_role <= $2';
+const SELECT_USERS_GROUP_FROM_ID = 'SELECT * FROM users INNER JOIN user_groups ON users.id = user_groups.user_id where users.id = $1 AND user_groups.group_role <= $2';
 const SELECT_MESSAGES_GROUP = 'SELECT * FROM messages INNER JOIN message_groups ON messages.id = message_groups.message_id INNER JOIN users ON users.id = messages.user_id INNER JOIN user_groups ON users.id = user_groups.user_id where message_groups.group_id = $1 AND messages.sent_role >= $2';
 const SELECT_MESSAGES_USER = 'SELECT * FROM messages where user_id = $1';
 const INSERT_MESSAGES = 'INSERT INTO messages (content, user_id) VALUES ($1, $2) RETURNING *';
