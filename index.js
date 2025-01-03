@@ -34,12 +34,14 @@ app.post('/login', userdb.login);
 app.post('/logout', userdb.logout);
 app.put('/user', userdb.changeUserData);
 app.put('/user/role/:id', userdb.changeRoleUser);
+app.put('/user/enable-notif/:id', userdb.enableNotifForUser);
+app.put('/user/disable-notif/:id', userdb.disableNotifForUser);
 app.delete('/user/:id', userdb.deleteUser);
 
 app.get('/messages', messagedb.getAllMessage);
 app.get('/message/:id', messagedb.getMessagesByUser);
 app.post('/messages/group/:groupId', messagedb.getMessagesByGroup);
-app.post('/message', messagedb.createMessage);
+app.post('/message', messagedb.createPrivateMessage);
 app.post('/message/group', messagedb.createMessageToGroup);
 
 app.get('/groups', groupdb.getAllGroups);

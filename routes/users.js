@@ -15,6 +15,13 @@ const workFactor = 10;
 
 const SELECT_USER_BY_EMAIL = 'SELECT * FROM users where email = $1';
 const UPDATE_USER_WHEN_LOGIN_LOGOUT = 'UPDATE users SET status = $1, token = $2 WHERE email = $3';
+const SELECT_ALL_USERS = 'SELECT * FROM users';
+const SELECT_USER_BY_GROUP = 'SELECT * FROM users INNER JOIN user_groups ON users.id = user_groups.user_id where user_groups.group_id = $1';
+const INSERT_NEW_USER = 'INSERT INTO users (firstname, lastname, email, role, password, status) VALUES ($1, $2, $3, $4, $5, $6)';
+const UPDATE_USER_ROLE = 'UPDATE users SET role = $1 where id = $2';
+const UPDATE_USER_DATA = 'UPDATE users SET firstname = $2, lastname = $3, picture = $4 where email = $1';
+const UPDATE_NOTIF_USER = 'UPDATE users SET is_notified = $1 where id = $2';
+const DELETE_USER = 'DELETE FROM users where id = $1';
 const login = (request, response) => {
     const { email, password, token } = request.body;
     /*const hash = crypto.createHash('sha256');
@@ -72,7 +79,6 @@ const logout = (request, response) => {
     }
 }
 
-const SELECT_ALL_USERS = 'SELECT * FROM users';
 const getAllUsers = (request, response) => {
     try{
         pool.query(SELECT_ALL_USERS, (error, results) => {
@@ -87,7 +93,6 @@ const getAllUsers = (request, response) => {
     }
 }
 
-const SELECT_USER_BY_GROUP = 'SELECT * FROM users INNER JOIN user_groups ON users.id = user_groups.user_id where user_groups.group_id = $1';
 const getUsersByGroup = (request, response) => {
     const groupId = parseInt(request.params.groupId);
     console.log(groupId);
@@ -121,7 +126,6 @@ const getUserByEmail = (request, response) => {
     }
 }
 
-const INSERT_NEW_USER = 'INSERT INTO users (firstname, lastname, email, role, password, status) VALUES ($1, $2, $3, $4, $5, $6)';
 const createAccount = (request, response) => {
     const { firstname, lastname, email, password } = request.body;
     var hash;
@@ -149,7 +153,6 @@ const createAccount = (request, response) => {
     }
 }
 
-const UPDATE_USER_ROLE = 'UPDATE users SET role = $1 where id = $2';
 const changeRoleUser = (request, response) => {
     const id = parseInt(request.params.id);
     const { role } = request.body;
@@ -167,7 +170,6 @@ const changeRoleUser = (request, response) => {
     }
 }
 
-const UPDATE_USER_DATA = 'UPDATE users SET firstname = $2, lastname = $3, picture = $4 where email = $1';
 const changeUserData = (request, response) => {
     const { email, firstname, lastname, picture } = request.body;
 
@@ -184,12 +186,43 @@ const changeUserData = (request, response) => {
     }
 }
 
-const DELETE_USER = 'DELETE FROM users where id = $1';
 const deleteUser = (request, response) => {
     const id = parseInt(request.params.id);
 
     try{
         pool.query(DELETE_USER, [id], (error, results) => {
+            if (error) {
+                throw error;
+            }
+            response.status(200).send(`User ID : ${id} deleted with succes`);
+        });
+    }
+    catch(error){
+        console.error(error);
+    }
+}
+
+const enableNotifForUser = (request, response) => {
+    const id = parseInt(request.params.id);
+
+    try{
+        pool.query(UPDATE_NOTIF_USER, [true, id], (error, results) => {
+            if (error) {
+                throw error;
+            }
+            response.status(200).send(`User ID : ${id} deleted with succes`);
+        });
+    }
+    catch(error){
+        console.error(error);
+    }
+}
+
+const disableNotifForUser = (request, response) => {
+    const id = parseInt(request.params.id);
+
+    try{
+        pool.query(UPDATE_NOTIF_USER, [false, id], (error, results) => {
             if (error) {
                 throw error;
             }
@@ -210,6 +243,8 @@ module.exports = {
     createAccount,
     changeUserData,
     changeRoleUser,
+    enableNotifForUser,
+    disableNotifForUser,
     deleteUser
 }
   

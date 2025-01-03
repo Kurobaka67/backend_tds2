@@ -77,7 +77,7 @@ const getMessagesByUser = (request, response) => {
     }
 }
 
-const createMessage = (request, response) => {
+const createPrivateMessage = (request, response) => {
     const { content, receiverId, senderId } = request.body;
 
     try{
@@ -90,7 +90,7 @@ const createMessage = (request, response) => {
                     if (error2) {
                         throw error2;
                     }
-                    sendPushMessage('Message', content, groupId, userId)
+                    sendPushPrivateMessage('Message', content, receiverId, senderId)
                     response.status(200).send(`Message added with succes`);
                 });
             }
@@ -180,7 +180,7 @@ async function sendPushGroupMessage(title, body, groupId, userId){
 
     if(users != null || users != undefined){
         for(const user of users){
-            if((user.token != null || user.token != undefined) && !tokens.includes(user.token)){
+            if((user.token != null || user.token != undefined) && !tokens.includes(user.token) && user.is_notified){
                 tokens.push(user.token);
             }
         }
@@ -207,7 +207,7 @@ async function sendPushGroupMessage(title, body, groupId, userId){
 async function sendPushPrivateMessage(title, body, receiverId, senderId){
     let user = await getUsersById(receiverId);
     let token = user.token;
-    
+
     const message = {
         notification: {
             title,
@@ -219,7 +219,7 @@ async function sendPushPrivateMessage(title, body, receiverId, senderId){
         token,
     };
   
-    if(tokens.length > 0){
+    if(user.is_notified && token != null){
         await admin.messaging().send(message);
     }
 }
@@ -228,7 +228,7 @@ module.exports = {
     getAllMessage,
     getMessagesByGroup,
     getMessagesByUser,
-    createMessage,
+    createPrivateMessage,
     createMessageToGroup
 }
   
