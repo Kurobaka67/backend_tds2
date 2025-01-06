@@ -41,6 +41,7 @@ app.delete('/user/:id', userdb.deleteUser);
 app.get('/messages', messagedb.getAllMessage);
 app.get('/message/:id', messagedb.getMessagesByUser);
 app.post('/messages/group/:groupId', messagedb.getMessagesByGroup);
+app.post('/messages/private', messagedb.getPrivateMessage);
 app.post('/message', messagedb.createPrivateMessage);
 app.post('/message/group', messagedb.createMessageToGroup);
 

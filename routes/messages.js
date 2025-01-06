@@ -14,6 +14,7 @@ const SELECT_ALL_MESSAGES = 'SELECT * FROM messages';
 const SELECT_USERS_GROUP_FROM_ID = 'SELECT * FROM users INNER JOIN user_groups ON users.id = user_groups.user_id where users.id = $1 AND user_groups.group_role <= $2';
 const SELECT_MESSAGES_GROUP = 'SELECT * FROM messages INNER JOIN message_groups ON messages.id = message_groups.message_id INNER JOIN users ON users.id = messages.user_id INNER JOIN user_groups ON users.id = user_groups.user_id where message_groups.group_id = $1 AND messages.sent_role >= $2';
 const SELECT_MESSAGES_USER = 'SELECT * FROM messages where user_id = $1';
+const SELECT_PRIVATE_MESSAGES_USER = 'SELECT * FROM messages INNER JOIN private_message ON messages.id = private_message.message_id where private_message.sender_id = $1 AND private_message.receiver_id = $2';
 const INSERT_MESSAGES = 'INSERT INTO messages (content, user_id) VALUES ($1, $2) RETURNING *';
 const INSERT_PRIVATE_MESSAGES = 'INSERT INTO privates_messages (message_id, receiver_id, sender_id) VALUES ($1, $2, $3)';
 const INSERT_MESSAGES_GROUP = 'INSERT INTO message_groups (group_id, message_id) VALUES ($1, $2)';
@@ -66,6 +67,22 @@ const getMessagesByUser = (request, response) => {
 
     try{
         pool.query(SELECT_MESSAGES_USER, [userId], (error, results) => {
+            if (error) {
+                throw error;
+            }
+            response.status(200).json(results.rows);
+        });
+    }
+    catch(error){
+        console.error(error);
+    }
+}
+
+const getPrivateMessage = (request, response) => {
+    const { receiverId, senderId } = request.body;
+
+    try{
+        pool.query(SELECT_PRIVATE_MESSAGES_USER, [senderId, receiverId], (error, results) => {
             if (error) {
                 throw error;
             }
@@ -229,6 +246,7 @@ module.exports = {
     getMessagesByGroup,
     getMessagesByUser,
     createPrivateMessage,
-    createMessageToGroup
+    createMessageToGroup,
+    getPrivateMessage
 }
   

@@ -118,6 +118,7 @@ const getUserByEmail = (request, response) => {
             if (error) {
                 throw error;
             }
+            console.log(response);
             response.status(200).json(results.rows);
         });
     }
