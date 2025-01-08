@@ -1,11 +1,12 @@
 const express = require('express');
+require("dotenv").config()
 const bodyParser = require('body-parser');
 const app = express();
 const userdb = require('./routes/users');
 const groupdb = require('./routes/groups');
 const messagedb = require('./routes/messages');
 const contactdb = require('./routes/contacts');
-const port = 3000;
+const port = process.env.TOKEN_SERVER_PORT
 const admin = require('firebase-admin');
 const serviceAccount = require('./tds2-cf434-firebase-adminsdk-k7hc9-4b723bda40.json');
 

@@ -1,7 +1,7 @@
 const Pool = require('pg').Pool
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
-
+const jwt = require("jsonwebtoken")
 
 const pool = new Pool({
     user: 'postgres',
@@ -12,6 +12,7 @@ const pool = new Pool({
 });
 
 const workFactor = 10;
+let refreshTokens = []
 
 const SELECT_USER_BY_EMAIL = 'SELECT * FROM users where email = $1';
 const UPDATE_USER_WHEN_LOGIN_LOGOUT = 'UPDATE users SET status = $1, token = $2 WHERE email = $3';
@@ -22,11 +23,20 @@ const UPDATE_USER_ROLE = 'UPDATE users SET role = $1 where id = $2';
 const UPDATE_USER_DATA = 'UPDATE users SET firstname = $2, lastname = $3, picture = $4 where email = $1';
 const UPDATE_NOTIF_USER = 'UPDATE users SET is_notified = $1 where id = $2';
 const DELETE_USER = 'DELETE FROM users where id = $1';
+
+function generateAccessToken(user) {
+    return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: "15m"});
+}
+
+    
+function generateRefreshToken(user) {
+    const refreshToken = jwt.sign(user, process.env.REFRESH_TOKEN_SECRET, {expiresIn: "20m"});
+    refreshTokens.push(refreshToken);
+    return refreshToken;
+}
+
 const login = (request, response) => {
     const { email, password, token } = request.body;
-    /*const hash = crypto.createHash('sha256');
-    hash.update(password);
-    const digest = hash.digest('hex');*/
 
     try{
         pool.query(SELECT_USER_BY_EMAIL, [email], (error, results) => {
@@ -37,12 +47,14 @@ const login = (request, response) => {
                 bcrypt.compare(password, results.rows[0].password, function(err, result) {
                     // Password matched
                     if (result) {
-                      console.log("Password verified");
-                      pool.query(UPDATE_USER_WHEN_LOGIN_LOGOUT, ['connected', token, email], (error2, results2) => {
-                        if (error2) {
-                            throw error2;
-                        }
-                        response.status(200).json(results.rows);
+                        const accessToken = generateAccessToken ({user: email})
+                        const refreshToken = generateRefreshToken ({user: email})
+                        console.log("Password verified");
+                        pool.query(UPDATE_USER_WHEN_LOGIN_LOGOUT, ['connected', token, email], (error2, results2) => {
+                            if (error2) {
+                                throw error2;
+                            }
+                            response.status(200).json(results.rows);
                     });
                     }
                     // Password not matched
@@ -64,19 +76,33 @@ const login = (request, response) => {
 }
 
 const logout = (request, response) => {
-    const { email } = request.body;
+    const { email, token } = request.body;
 
     try{
         pool.query(UPDATE_USER_WHEN_LOGIN_LOGOUT, ['disconnected', null, email], (error, results) => {
             if (error) {
                 throw error;
             }
-            response.status(200).send("User logged out");
+            refreshTokens = refreshTokens.filter( (c) => c != token)
+            response.status(204).send("User logged out");
         });
     }
     catch(error){
         console.error(error);
     }
+}
+
+const refreshUserToken = (request, response) => {
+    const { token, email } = request.body;
+    
+    if (!refreshTokens.includes(req.body.token)) res.status(400).send("Refresh Token Invalid");
+
+    refreshTokens = refreshTokens.filter( (c) => c != token)
+    //remove the old refreshToken from the refreshTokens list
+    const accessToken = generateAccessToken ({user: email})
+    const refreshToken = generateRefreshToken ({user: email})
+    //generate new accessToken and refreshTokens
+    res.json ({accessToken: accessToken, refreshToken: refreshToken})
 }
 
 const getAllUsers = (request, response) => {
@@ -189,13 +215,15 @@ const changeUserData = (request, response) => {
 
 const deleteUser = (request, response) => {
     const id = parseInt(request.params.id);
+    const { token } = request.body;
 
     try{
         pool.query(DELETE_USER, [id], (error, results) => {
             if (error) {
                 throw error;
             }
-            response.status(200).send(`User ID : ${id} deleted with succes`);
+            refreshTokens = refreshTokens.filter( (c) => c != req.body.token)
+            response.status(204).send(`User ID : ${id} deleted with succes`);
         });
     }
     catch(error){
