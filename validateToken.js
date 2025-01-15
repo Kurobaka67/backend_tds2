@@ -5,34 +5,6 @@ app.use (express.json())
 const jwt = require("jsonwebtoken")
 const port = process.env.PORT
 
-app.listen(port,()=> {
-    console.log(`Validation server running on ${port}...`)
-})
-
-app.get("/posts", validateToken, (req, res)=>{
-    console.log("Token is valid")
-    console.log(req.user.firstname)
-    res.send(`${req.user.firstname} successfully accessed post`)
-})
-
-app.get('/users', validateRequest('admin'), (req, res) => {
-    res.send(JSON.stringify({ users }))
-});
-   
-  
-app.get('/users/:userId', validateRequest('admin'), (req, res) => {
-    const { params } = req;
-    const { userId } = params;
-
-    console.log({ userId });
-    const user = users.find((user) => user.id === userId);
-
-    if (!user) {
-        res.sendStatus(404)
-        return;
-    }
-    res.send({ user })
-});
 
 function validateToken(req, res, next) {
 
@@ -68,6 +40,36 @@ const validateRequest = (requiredRole) => {
         }
     }
 }
+
+app.listen(port,()=> {
+    console.log(`Validation server running on ${port}...`)
+})
+
+app.get("/posts", validateToken, (req, res)=>{
+    console.log("Token is valid")
+    console.log(req.user.firstname)
+    res.send(`${req.user.firstname} successfully accessed post`)
+})
+
+app.get('/users', validateRequest('admin'), (req, res) => {
+    res.send(JSON.stringify({ users }))
+});
+   
+  
+app.get('/users/:userId', validateRequest('admin'), (req, res) => {
+    const { params } = req;
+    const { userId } = params;
+
+    console.log({ userId });
+    const user = users.find((user) => user.id === userId);
+
+    if (!user) {
+        res.sendStatus(404)
+        return;
+    }
+    res.send({ user })
+});
+
 
 module.exports = {
     validateToken

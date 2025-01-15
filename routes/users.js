@@ -47,9 +47,9 @@ const login = (request, response) => {
                 bcrypt.compare(password, results.rows[0].password, function(err, result) {
                     // Password matched
                     if (result) {
-                        const accessToken = generateAccessToken ({user: email})
-                        const refreshToken = generateRefreshToken ({user: email})
-                        console.log("Password verified");
+                        //const accessToken = generateAccessToken ({user: email})
+                        //const refreshToken = generateRefreshToken ({user: email})
+                        //console.log("Password verified");
                         pool.query(UPDATE_USER_WHEN_LOGIN_LOGOUT, ['connected', token, email], (error2, results2) => {
                             if (error2) {
                                 throw error2;
@@ -59,10 +59,10 @@ const login = (request, response) => {
                     }
                     // Password not matched
                     else {
-                      console.log("Password not verified");
-                      response.status(401).send('Password not verified');
+                    console.log("Password not verified");
+                    response.status(401).send('Password not verified');
                     }
-                  });
+                });
                 
             }
             else{
@@ -83,7 +83,7 @@ const logout = (request, response) => {
             if (error) {
                 throw error;
             }
-            refreshTokens = refreshTokens.filter( (c) => c != token)
+            //refreshTokens = refreshTokens.filter( (c) => c != token)
             response.status(204).send("User logged out");
         });
     }
@@ -156,11 +156,9 @@ const getUserByEmail = (request, response) => {
 const createAccount = (request, response) => {
     const { firstname, lastname, email, password } = request.body;
     var hash;
-    bcrypt.genSalt(workFactor, function(err, salt) {  
-        bcrypt.hash(password, salt, function(err, hash) {
-            hash = hash;
-            console.log(`Hash: ${hash}`);
-        });
+    bcrypt.hash(password, 10, function(err, hash) {
+        hash = hash;
+        console.log(`Hash: ${hash}`);
     });
 
     /*const hash = crypto.createHash('sha256');
